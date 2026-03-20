@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/filter_item"
+    android:layout_width="72dp"
+    android:layout_height="72dp"
+    android:layout_margin="6dp">
+
+    <ImageView
+        android:id="@+id/imageFilter"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"/>
+    <TextView
+        android:id="@+id/txtName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:textSize="12sp"/>
+
+    <!-- Lock icon -->
+    <ImageView
+        android:id="@+id/imageLock"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_lock"
+        android:layout_gravity="center"
+        android:visibility="gone"/>
+
+</FrameLayout>

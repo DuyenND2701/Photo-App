@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Ảnh chính -->
+    <ImageView
+        android:id="@+id/imageEditor"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scaleType="fitCenter"
+        android:background="#000" />
+
+    <!-- Thanh chỉnh độ sáng -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Brightness"
+        android:padding="8dp"/>
+
+    <SeekBar
+        android:id="@+id/seekBrightness"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <!-- Thanh chỉnh contrast -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Contrast"
+        android:padding="8dp"/>
+
+    <SeekBar
+        android:id="@+id/seekContrast"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <!-- Nút chức năng -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnCrop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="15dp"
+            android:text="Crop"/>
+
+        <Button
+            android:id="@+id/btnRotate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="15dp"
+            android:text="Rotate"/>
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save"/>
+    </LinearLayout>
+
+    <!-- Danh sách filter -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerFilters"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="horizontal"/>
+
+</LinearLayout>
