@@ -30,7 +30,7 @@ class CameraActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraBinding
     private lateinit var cameraExcutor: ExecutorService
     private var imageCapture: ImageCapture? = null
-    private lateinit var camera: Camera // để thao tác flash
+    private lateinit var camera: Camera
     private var isFlashOn = false
 
     private var cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
@@ -65,10 +65,7 @@ class CameraActivity : AppCompatActivity() {
             Log.d("TAG", "click albumbtn")
         }
 
-
     }
-
-
 
     private fun switchCamera() {
         cameraSelector = if (cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
@@ -148,7 +145,6 @@ class CameraActivity : AppCompatActivity() {
 
             try {
                 cameraProvider.unbindAll()
-                // bind camera và lưu Camera object
                 camera = cameraProvider.bindToLifecycle(
                     this,
                     cameraSelector,
@@ -167,12 +163,12 @@ class CameraActivity : AppCompatActivity() {
 
         if (isFlashOn) {
             Log.d("TAG", "off: ")
-            binding.buttonFlash.setImageResource(R.drawable.flash_on) // icon ON
-            camera.cameraControl.enableTorch(true) // bật flash
+            binding.buttonFlash.setImageResource(R.drawable.flash_on)
+            camera.cameraControl.enableTorch(true)
         } else {
             Log.d("TAG", "on: ")
-            binding.buttonFlash.setImageResource(R.drawable.flash_off) // icon OFF
-            camera.cameraControl.enableTorch(false) // tắt flash
+            binding.buttonFlash.setImageResource(R.drawable.flash_off)
+            camera.cameraControl.enableTorch(false)
         }
     }
     override fun onDestroy() {

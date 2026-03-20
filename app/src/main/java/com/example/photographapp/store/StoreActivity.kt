@@ -38,14 +38,13 @@ class StoreActivity : AppCompatActivity() {
     private fun setupBilling() {
         Log.d("TAG", "setupBilling")
 
-        // 🔥 Lấy instance global từ MyApp
         billingHelper = (application as AppConfig).billingHelper
 
         billingHelper.onPurchaseSuccess = {
             runOnUiThread {
                 Toast.makeText(this, "Transaction success", Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, AlbumActivity::class.java))
-                finish() // 🔥 thêm dòng này
+                finish()
             }
         }
 

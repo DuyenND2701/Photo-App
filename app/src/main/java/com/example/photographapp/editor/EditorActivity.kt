@@ -90,17 +90,15 @@ class EditorActivity : AppCompatActivity() {
             filterGroup.addFilter(brightnessFilter)
             filterGroup.addFilter(contrastFilter)
             filterGroup.addFilter(selectedFilter)
-                val item = filterList.find { it.filter == selectedFilter }
-                if (item?.isLocked == true) {
+            val item = filterList.find { it.filter == selectedFilter }
+            if (item?.isLocked == true) {
                     showUnlockDiaglog(selectedFilter)
                     return@FilterAdapter
                 }
 
             gpuImage.setFilter(selectedFilter)
             updateImage()
-
         }
-
         binding.recyclerFilters.adapter = adapter
     }
 
@@ -179,15 +177,11 @@ class EditorActivity : AppCompatActivity() {
                         }
 
                         val safeBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-
-                        // CẬP NHẬT LẠI STATE
                         currentBitmap = safeBitmap
                         currentUri = uri
 
                         //SET LẠI GPU IMAGE
                         gpuImage.setImage(safeBitmap)
-
-                        //UPDATE PREVIEW
                         updateImage()
                     }
                 }
@@ -227,7 +221,6 @@ class EditorActivity : AppCompatActivity() {
         return Uri.fromFile(file)
     }
 
-    // Load ảnh từ Album (URI)
     private fun loadImage() {
         val uriString = intent.getStringExtra("image_uri") ?: return
         val uri = Uri.parse(uriString)
@@ -238,8 +231,6 @@ class EditorActivity : AppCompatActivity() {
             decoder.setMutableRequired(true)
             decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE 
         }
-
-        // Convert về ARGB_8888 (fix crash GPUImage)
         val safeBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
 
         currentBitmap = safeBitmap
@@ -257,10 +248,9 @@ class EditorActivity : AppCompatActivity() {
         gpuImage.setFilter(filterGroup)
     }
 
-    // SeekBar Brightness + Contrast
     private fun setupSeekBars() {
 
-        // Brightness (-1 → 1)
+
         binding.seekBrightness.max = 200
         binding.seekBrightness.progress = 100
 
@@ -276,7 +266,7 @@ class EditorActivity : AppCompatActivity() {
                 override fun onStopTrackingTouch(p0: SeekBar?) {}
             })
 
-        // Contrast (0 → 2)
+
         binding.seekContrast.max = 200
         binding.seekContrast.progress = 100
 
@@ -293,10 +283,9 @@ class EditorActivity : AppCompatActivity() {
             })
     }
 
-    // Buttons: Rotate + Save
+
     private fun setupButtons() {
 
-        // Rotate 90 độ
         binding.btnRotate.setOnClickListener {
             currentBitmap?.let {
                 val matrix = Matrix()
@@ -312,20 +301,17 @@ class EditorActivity : AppCompatActivity() {
             }
         }
 
-        // Save ảnh
         binding.btnSave.setOnClickListener {
             saveImage()
         }
     }
 
-    // Apply filter và hiển thị
     private fun updateImage() {
         val result = gpuImage.bitmapWithFilterApplied
         binding.imageEditor.setImageBitmap(result)
         Log.d("updateImage", "updateImage: $result")
     }
 
-    // Lưu ảnh vào gallery
     private fun saveImage() {
         val bitmap = gpuImage.bitmapWithFilterApplied ?: return
 
@@ -349,7 +335,6 @@ class EditorActivity : AppCompatActivity() {
             val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
             intent.data = it
             sendBroadcast(intent)
-
             Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
         }
         startActivity(Intent(this, AlbumActivity::class.java))

@@ -84,10 +84,9 @@ class BillingHelper(
             .build()
 
         billingClient.queryPurchasesAsync(params) { _, purchases ->
-
+            Log.d("TAG", "queryPurchase: ${purchases}")
             if (purchases.isEmpty()) {
-                UserRepository.PrefsManager.setPremium(context, false)
-                onRestoreResult?.invoke(false)
+                UserRepository.PrefsManager.editPre(context, false)
                 return@queryPurchasesAsync
             }
 
@@ -95,7 +94,6 @@ class BillingHelper(
                 handlePurchase(it)
             }
 
-            onRestoreResult?.invoke(true)
         }
     }
 
@@ -110,7 +108,11 @@ class BillingHelper(
             } else {
                 savePremium()
                 onPurchaseSuccess?.invoke()
+                onRestoreResult?.invoke(true)
             }
+        } else{
+            UserRepository.PrefsManager.editPre(context, false)
+            Log.d("TAG", "${UserRepository.PrefsManager.isPremium(context)}")
         }
     }
 
