@@ -15,23 +15,23 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.example.photographapp.data.UserRepository
 import com.example.photographapp.data.UserState
+import com.example.photographapp.store.StoreActivity
 
 class BillingHelper(
-    private val context: Context,
-    private val onPurchaseSuccess: () -> Unit,
-    private val onBillingReady: () -> Unit // 👈 thêm callback
+    private val context: Context
 ) {
-    private lateinit var userState: UserState
+
     lateinit var billingClient: BillingClient
     private val PRODUCT_ID = "basic.test"
 
-    fun startConnection() {
-        Log.d("TAG", "startConnection")
+    // callback
+    var onPurchaseSuccess: (() -> Unit)? = null
+    var onBillingReady: (() -> Unit)? = null
+    var onRestoreResult: ((Boolean) -> Unit)? = null
 
+    fun startConnection() {
         billingClient = BillingClient.newBuilder(context)
             .setListener { billingResult, purchases ->
-                Log.d("TAG", "Purchase listener: ${billingResult.responseCode}")
-
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     purchases?.forEach {
                         handlePurchase(it)
@@ -43,24 +43,20 @@ class BillingHelper(
 
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingServiceDisconnected() {
-                Log.d("TAG", "Disconnected → retry")
                 startConnection()
             }
 
             override fun onBillingSetupFinished(result: BillingResult) {
-                Log.d("TAG", "Billing setup: ${result.responseCode}")
-
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.d("TAG", "Billing READY")
-
-                    onBillingReady()   // 🔥 chỉ lúc này mới load product
-                    queryPurchase()    // restore purchase
+                    onBillingReady?.invoke()
+                    queryPurchase()
                 }
             }
         })
     }
 
     fun launchPurchase(activity: Activity, productDetails: ProductDetails) {
+
         val productParamsBuilder =
             BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(productDetails)
@@ -74,17 +70,12 @@ class BillingHelper(
                 productParamsBuilder.setOfferToken(it)
             }
         }
+
         val params = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(
-                listOf(productParamsBuilder.build())
-            )
+            .setProductDetailsParamsList(listOf(productParamsBuilder.build()))
             .build()
 
-        val result = billingClient.launchBillingFlow(activity, params)
-        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-            Toast.makeText(activity, "Transaction is failed", Toast.LENGTH_SHORT).show()
-        }
-
+        billingClient.launchBillingFlow(activity, params)
     }
 
     fun queryPurchase() {
@@ -93,33 +84,37 @@ class BillingHelper(
             .build()
 
         billingClient.queryPurchasesAsync(params) { _, purchases ->
-            Log.d("TAG", "Restore purchases: ${purchases.size}")
+
+            if (purchases.isEmpty()) {
+                UserRepository.PrefsManager.setPremium(context, false)
+                onRestoreResult?.invoke(false)
+                return@queryPurchasesAsync
+            }
 
             purchases.forEach {
                 handlePurchase(it)
             }
+
+            onRestoreResult?.invoke(true)
         }
     }
 
     private fun handlePurchase(purchase: Purchase) {
-        Log.d("TAG", "handlePurchase")
 
         if (purchase.products.contains(PRODUCT_ID) &&
             purchase.purchaseState == Purchase.PurchaseState.PURCHASED
         ) {
+
             if (!purchase.isAcknowledged) {
                 acknowledgePurchase(purchase)
             } else {
-                // Unlock feature + set prefs
-                userState = UserState(true)
-                UserRepository.PrefsManager.setPremium(context, userState.isPremium)
-                onPurchaseSuccess()
+                savePremium()
+                onPurchaseSuccess?.invoke()
             }
         }
     }
 
     private fun acknowledgePurchase(purchase: Purchase) {
-        Log.d("TAG", "acknowledgePurchase")
 
         val params = AcknowledgePurchaseParams.newBuilder()
             .setPurchaseToken(purchase.purchaseToken)
@@ -127,8 +122,13 @@ class BillingHelper(
 
         billingClient.acknowledgePurchase(params) { result ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                onPurchaseSuccess()
+                savePremium()
+                onPurchaseSuccess?.invoke()
             }
         }
+    }
+
+    private fun savePremium() {
+        UserRepository.PrefsManager.setPremium(context, true)
     }
 }

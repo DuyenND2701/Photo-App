@@ -9,7 +9,6 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.photographapp.databinding.ActivityAlbumBinding
 import com.example.photographapp.editor.EditorActivity
 
@@ -27,35 +26,48 @@ class AlbumActivity : AppCompatActivity() {
 
 
     }
+    override fun onResume() {
+        super.onResume()
+        loadPhotos()
+    }
 
     private fun loadPhotos() {
 
+        photoList.clear()
+
         val collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-        val projection = arrayOf(
-           MediaStore.Images.Media._ID)
-        val cursor = contentResolver.query(collection, projection, null, null, "${MediaStore.Images.Media.DATE_ADDED} DESC")
+        val projection = arrayOf(MediaStore.Images.Media._ID)
+
+        val cursor = contentResolver.query(
+            collection,
+            projection,
+            null,
+            null,
+            "${MediaStore.Images.Media.DATE_ADDED} DESC"
+        )
+
         cursor?.use {
-            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-            if (cursor == null || !cursor.moveToFirst()) {
+            val idColumn = it.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
+
+            if (!it.moveToFirst()) {
                 binding.none.visibility = View.VISIBLE
                 binding.recyclerAlbum.visibility = View.GONE
                 return
             }
-            while (cursor.moveToNext()) {
-                val id = cursor.getLong(idColumn)
-                val uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    id)
+            do {
+                val id = it.getLong(idColumn)
+                val uri = ContentUris.withAppendedId(collection, id)
                 photoList.add(Photo(uri.toString()))
-            }
+            } while (it.moveToNext())
         }
-        val adapter = AlbumAdapter(photoList){
+
+        val adapter = AlbumAdapter(photoList) {
             val intent = Intent(this, EditorActivity::class.java)
-            intent.putExtra("image_uri",it.uri)
+            intent.putExtra("image_uri", it.uri)
             startActivity(intent)
-            Log.d("TAG", "loadPhotos: change Activity")
         }
+
         binding.recyclerAlbum.adapter = adapter
-        Log.d("TAG", "call load Phôtos ")
     }
 
 }

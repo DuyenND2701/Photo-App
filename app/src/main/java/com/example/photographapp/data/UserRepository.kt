@@ -19,6 +19,9 @@ class UserRepository(private val context: Context) {
         fun isPremium(context: Context): Boolean {
             return getPrefs(context).getBoolean("is_premium", false)
         }
+        fun editPre(context: Context, value: Boolean) {
+            return getPrefs(context).edit().putBoolean("is_premium", value).apply()
+        }
     }
 
 }

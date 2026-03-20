@@ -1,36 +1,30 @@
 package com.example.photographapp.camera
 
-import android.content.pm.PackageManager
-import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.content.ContextCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.photographapp.databinding.ActivityCameraBinding
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import android.Manifest
 import android.content.ContentValues
 import android.content.Intent
-import android.hardware.camera2.CaptureRequest
+import android.content.pm.PackageManager
+import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
-import androidx.camera.core.CameraProvider
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat
 import com.example.photographapp.R
 import com.example.photographapp.album.AlbumActivity
-import com.google.common.util.concurrent.ListenableFuture
-import java.io.File
+import com.example.photographapp.databinding.ActivityCameraBinding
 import java.text.SimpleDateFormat
 import java.util.Locale
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class CameraActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCameraBinding

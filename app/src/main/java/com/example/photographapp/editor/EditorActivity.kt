@@ -1,5 +1,6 @@
 package com.example.photographapp.editor
 
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -8,12 +9,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.Adapter
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.photographapp.ads.AdsHelper
@@ -24,11 +23,18 @@ import com.example.photographapp.store.StoreActivity
 import com.yalantis.ucrop.UCrop
 import jp.co.cyberagent.android.gpuimage.GPUImage
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageBrightnessFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageColorInvertFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageContrastFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageExposureFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageFilter
 import jp.co.cyberagent.android.gpuimage.filter.GPUImageFilterGroup
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageGaussianBlurFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageGrayscaleFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageSaturationFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageSharpenFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageSketchFilter
+import jp.co.cyberagent.android.gpuimage.filter.GPUImageToonFilter
 import java.io.File
-import jp.co.cyberagent.android.gpuimage.filter.*
 
 class EditorActivity : AppCompatActivity() {
     private lateinit var binding: ActivityEditorBinding
@@ -156,21 +162,45 @@ class EditorActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == UCrop.REQUEST_CROP){
-            when(resultCode){
+
+        if (requestCode == UCrop.REQUEST_CROP) {
+            when (resultCode) {
+
                 RESULT_OK -> {
-                    val resultUri = UCrop.getOutput(data!!)
+                    val resultUri = UCrop.getOutput(data ?: return)
+
+                    resultUri?.let { uri ->
+
+                        val source = ImageDecoder.createSource(contentResolver, uri)
+
+                        val bitmap = ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                            decoder.setMutableRequired(true)
+                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+
+                        val safeBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+
+                        // CẬP NHẬT LẠI STATE
+                        currentBitmap = safeBitmap
+                        currentUri = uri
+
+                        //SET LẠI GPU IMAGE
+                        gpuImage.setImage(safeBitmap)
+
+                        //UPDATE PREVIEW
+                        updateImage()
+                    }
                 }
 
                 RESULT_CANCELED -> {
                     Toast.makeText(this, "Crop canceled", Toast.LENGTH_SHORT).show()
                 }
+
                 UCrop.RESULT_ERROR -> {
                     val error = UCrop.getError(data!!)
-                    Log.e("crop error", error.toString() )
+                    Log.e("crop error", error.toString())
                 }
             }
-
         }
     }
 
@@ -301,14 +331,27 @@ class EditorActivity : AppCompatActivity() {
 
         val filename = "EDIT_${System.currentTimeMillis()}.jpg"
 
-        MediaStore.Images.Media.insertImage(
-            contentResolver,
-            bitmap,
-            filename,
-            "Edited Image"
-        )
+        val resolver = contentResolver
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/PhotographApp")
+        }
 
-        Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
+        val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+        uri?.let {
+            val outputStream = resolver.openOutputStream(it)
+            if (outputStream != null) {
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            }
+            outputStream?.close()
+            val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+            intent.data = it
+            sendBroadcast(intent)
+
+            Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
+        }
         startActivity(Intent(this, AlbumActivity::class.java))
     }
 }

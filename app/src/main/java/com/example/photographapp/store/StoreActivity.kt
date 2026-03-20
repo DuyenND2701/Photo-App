@@ -17,6 +17,7 @@ import com.example.photographapp.billing.BillingHelper
 import com.example.photographapp.data.UserRepository
 import com.example.photographapp.databinding.ActivityAlbumBinding
 import com.example.photographapp.databinding.ActivityStoreBinding
+import com.example.photographapp.initialize.AppConfig
 
 class StoreActivity : AppCompatActivity() {
 
@@ -37,22 +38,32 @@ class StoreActivity : AppCompatActivity() {
     private fun setupBilling() {
         Log.d("TAG", "setupBilling")
 
-        billingHelper = BillingHelper(
-            context = this,
-            onPurchaseSuccess = {
-                startActivity(Intent(this, AlbumActivity::class.java))
-                Toast.makeText(this, "Transaction is success", Toast.LENGTH_SHORT).show()},
-            onBillingReady = {
-                loadPurchasePackage() // 🔥 chỉ gọi khi billing READY
-            }
-        )
+        // 🔥 Lấy instance global từ MyApp
+        billingHelper = (application as AppConfig).billingHelper
 
-        billingHelper.startConnection()
+        billingHelper.onPurchaseSuccess = {
+            runOnUiThread {
+                Toast.makeText(this, "Transaction success", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(this, AlbumActivity::class.java))
+                finish() // 🔥 thêm dòng này
+            }
+        }
+
+        billingHelper.onRestoreResult = { hasPurchase ->
+            runOnUiThread {
+                if (hasPurchase) {
+                    Toast.makeText(this, "Restore success", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, AlbumActivity::class.java))
+
+                } else {
+                    Toast.makeText(this, "You haven't buy purchase yet!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        loadPurchasePackage()
     }
 
     private fun loadPurchasePackage() {
-        Log.d("TAG", "loadPurchasePackage")
-
         val params = QueryProductDetailsParams.newBuilder()
             .setProductList(
                 listOf(
@@ -65,34 +76,38 @@ class StoreActivity : AppCompatActivity() {
             .build()
 
         billingHelper.billingClient.queryProductDetailsAsync(params) { _, productList ->
-            Log.d("TAG", "Product size: ${productList.size}")
-            Log.d("TAG", "Package: ${applicationContext.packageName}")
             if (productList.isNotEmpty()) {
+                Log.d("TAG", "loadPurchasePackage: ${productList.size}")
+                Log.d("TAG", "loadPurchasePackage: ${productList}")
                 productDetails = productList[0]
-                Log.d("TAG", "loadPurchasePackage: ${productDetails}")
+
                 runOnUiThread {
                     binding.txtPrice.text =
-                        (productDetails!!.subscriptionOfferDetails?.first()?.pricingPhases?.pricingPhaseList?.first()?.formattedPrice) ?: "53 0000 VND"
-
+                        productDetails!!
+                            .subscriptionOfferDetails
+                            ?.first()
+                            ?.pricingPhases
+                            ?.pricingPhaseList
+                            ?.first()
+                            ?.formattedPrice ?: "53 000"
                 }
             }
         }
     }
 
     private fun setupClick() {
+
         binding.btnBuy.setOnClickListener {
-            Log.d("TAG", "setupClick: ${productDetails}")
             productDetails?.let {
                 billingHelper.launchPurchase(this, it)
-
             } ?: run {
-                Toast.makeText(this, "Product not found", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Product not found", Toast.LENGTH_SHORT).show()
             }
         }
 
         binding.btnRestore.setOnClickListener {
             billingHelper.queryPurchase()
-            Toast.makeText(this, "Restoring purchases...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Restoring...", Toast.LENGTH_SHORT).show()
         }
     }
 }
